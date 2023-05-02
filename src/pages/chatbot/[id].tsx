@@ -4,6 +4,7 @@ import Head from "next/head";
 import { ChatMessage } from "@/server/schemas";
 import { api } from "@/utils/api";
 import useChatScroll from "@/hooks/useChatScroll";
+import getChatStyling from "@/utils/getChatStyling";
 
 import { IconLoader2, IconRefresh } from "@tabler/icons-react";
 
@@ -12,6 +13,7 @@ const originalChatState: ChatMessage[] = [
         actor: "bot",
         message: "Hi! What can I help you with?",
         timestamp: new Date(),
+        error: false,
     },
 ];
 
@@ -22,15 +24,28 @@ const Page: NextPage = () => {
 
     const ref = useChatScroll(chatHistory);
     const promptMutation = api.chat.prompt.useMutation({
-        onSuccess: (data) =>
-            setChatHistory((history) => [
+        onSuccess: (data) => {
+            return setChatHistory((history) => [
                 ...history,
                 {
                     actor: "bot",
                     message: data,
                     timestamp: new Date(),
+                    error: false,
                 },
-            ]),
+            ]);
+        },
+        onError: () => {
+            return setChatHistory((history) => [
+                ...history,
+                {
+                    actor: "bot",
+                    message: "Sorry, something went wrong. Please try again.",
+                    timestamp: new Date(),
+                    error: true,
+                },
+            ]);
+        },
     });
 
     const sendMessage = () => {
@@ -40,6 +55,7 @@ const Page: NextPage = () => {
                 {
                     message,
                     actor: "user",
+                    error: false,
                     timestamp: new Date(),
                 },
             ] as ChatMessage[];
@@ -85,16 +101,12 @@ const Page: NextPage = () => {
                             <div
                                 key={index}
                                 className={`flex ${
-                                    chatMessage.actor === "bot"
-                                        ? "justify-start"
-                                        : "justify-end"
+                                    getChatStyling(chatMessage).justify
                                 }`}
                             >
                                 <div
                                     className={`mb-1 max-w-[80%] rounded-md px-3 py-2 md:max-w-[45%] ${
-                                        chatMessage.actor === "bot"
-                                            ? "bg-slate-100 text-black"
-                                            : "bg-blue-600 text-white"
+                                        getChatStyling(chatMessage).styling
                                     }`}
                                 >
                                     {chatMessage.message}
