@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { type NextPage } from "next";
 import Head from "next/head";
+import { ChatMessage } from "@/server/schemas";
+import { api } from "@/utils/api";
+import useChatScroll from "@/hooks/useChatScroll";
 
-import { IconRefresh } from "@tabler/icons-react";
+import { IconLoader2, IconRefresh } from "@tabler/icons-react";
 
 const originalChatState: ChatMessage[] = [
     {
@@ -17,18 +20,36 @@ const Page: NextPage = () => {
     const [chatHistory, setChatHistory] =
         useState<ChatMessage[]>(originalChatState);
 
-    const sendMessage = () => {
-        if (message !== "") {
+    const ref = useChatScroll(chatHistory);
+    const promptMutation = api.chat.prompt.useMutation({
+        onSuccess: (data) =>
             setChatHistory((history) => [
                 ...history,
+                {
+                    actor: "bot",
+                    message: data,
+                    timestamp: new Date(),
+                },
+            ]),
+    });
+
+    const sendMessage = () => {
+        if (message !== "" && !promptMutation.isLoading) {
+            const newHistory = [
+                ...chatHistory,
                 {
                     message,
                     actor: "user",
                     timestamp: new Date(),
                 },
-            ]);
+            ] as ChatMessage[];
 
-            return setMessage("");
+            setChatHistory(newHistory);
+            setMessage("");
+
+            return promptMutation.mutate({
+                messages: newHistory,
+            });
         }
     };
 
@@ -55,8 +76,11 @@ const Page: NextPage = () => {
                     </button>
                 </header>
 
-                <main className="flex-grow bg-white p-4">
-                    <div className="grid gap-y-1">
+                <main
+                    ref={ref}
+                    className="flex-grow overflow-y-auto bg-white p-4"
+                >
+                    <div className="grid gap-y-3">
                         {chatHistory.map((chatMessage, index) => (
                             <div
                                 key={index}
@@ -77,12 +101,21 @@ const Page: NextPage = () => {
                                 </div>
                             </div>
                         ))}
+
+                        {promptMutation.isLoading && (
+                            <div className="justify-start">
+                                <div className="mb-1 max-w-[80%] rounded-md bg-slate-100 px-3 py-2 text-sm italic text-black md:max-w-[45%]">
+                                    Chatbot is thinking...
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </main>
 
                 <footer className="border-t-2 border-slate-100 bg-white px-4 py-3">
                     <div className="flex gap-x-3">
                         <input
+                            disabled={promptMutation.isLoading}
                             type="text"
                             placeholder="Send a message..."
                             className="flex-grow rounded-md border border-slate-200 px-3 py-2 shadow-sm outline-none focus:ring-1 focus:ring-slate-300"
@@ -96,10 +129,15 @@ const Page: NextPage = () => {
                         />
 
                         <button
-                            className="rounded-md bg-slate-800 px-4 py-1 text-white transition-colors duration-100 ease-linear hover:bg-slate-900 active:bg-slate-950"
+                            disabled={promptMutation.isLoading}
+                            className="flex w-16 items-center justify-center rounded-md bg-slate-800 py-1 text-white transition-colors duration-100 ease-linear hover:bg-slate-900 active:bg-slate-950"
                             onClick={sendMessage}
                         >
-                            Send
+                            {promptMutation.isLoading ? (
+                                <IconLoader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                                "Send"
+                            )}
                         </button>
                     </div>
                 </footer>
