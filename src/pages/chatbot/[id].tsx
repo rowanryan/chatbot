@@ -115,7 +115,6 @@ const Page: NextPage = () => {
                 <footer className="border-t-2 border-slate-100 bg-white px-4 py-3">
                     <div className="flex gap-x-3">
                         <input
-                            disabled={promptMutation.isLoading}
                             type="text"
                             placeholder="Send a message..."
                             className="flex-grow rounded-md border border-slate-200 px-3 py-2 shadow-sm outline-none focus:ring-1 focus:ring-slate-300"

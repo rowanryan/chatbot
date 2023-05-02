@@ -1,23 +1,30 @@
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { ChatMessage } from "@/server/schemas";
-import { HumanChatMessage, AIChatMessage } from "langchain/schema";
-import { AgentExecutor, ChatAgent } from "langchain/agents";
+import { ChatConversationalAgent } from "langchain/agents";
 import { Calculator } from "langchain/tools/calculator";
+import { BufferMemory, ChatMessageHistory } from "langchain/memory";
 
 export { initializeAgentExecutorWithOptions } from "langchain/agents";
 
 export const llm = new ChatOpenAI();
-const tools = [new Calculator()];
+export const tools = [new Calculator()];
 
-const agent = ChatAgent.fromLLMAndTools(new ChatOpenAI(), tools);
-const executor = AgentExecutor.fromAgentAndTools({ agent, tools });
+export const agent = ChatConversationalAgent.fromLLMAndTools(llm, tools);
 
-export const createChatHistory = (messages: ChatMessage[]) => {
-    return messages.map((message) => {
+export const createBufferMemory = async (messages: ChatMessage[]) => {
+    const chatMessageHistory = new ChatMessageHistory();
+
+    for (const message of messages) {
         if (message.actor === "bot") {
-            return new HumanChatMessage(message.message);
+            await chatMessageHistory.addAIChatMessage(message.message);
+        } else {
+            await chatMessageHistory.addUserMessage(message.message);
         }
+    }
 
-        return new AIChatMessage(message.message);
+    return new BufferMemory({
+        chatHistory: chatMessageHistory,
+        returnMessages: true,
+        memoryKey: "chat_history",
     });
 };

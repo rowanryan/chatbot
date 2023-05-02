@@ -2,7 +2,8 @@ import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { chatMessage } from "@/server/schemas";
-import { createChatHistory, llm } from "@/services/langchain";
+import { agent, createBufferMemory, tools } from "@/services/langchain";
+import { AgentExecutor } from "langchain/agents";
 
 export const chatRouter = createTRPCRouter({
     prompt: publicProcedure
@@ -12,10 +13,17 @@ export const chatRouter = createTRPCRouter({
             })
         )
         .mutation(async ({ input }) => {
-            const history = createChatHistory(input.messages);
+            const newMessage = input.messages.at(-1);
+            const previousMessages = input.messages.slice(0, -1);
 
-            const result = await llm.call(history);
+            const executor = AgentExecutor.fromAgentAndTools({
+                agent,
+                tools,
+                memory: await createBufferMemory(previousMessages),
+            });
 
-            return result.text;
+            const result = await executor.call({ input: newMessage?.message });
+
+            return result.output as string;
         }),
 });
