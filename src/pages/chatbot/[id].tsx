@@ -2,9 +2,9 @@ import { useState } from "react";
 import { type NextPage } from "next";
 import Head from "next/head";
 import { ChatMessage } from "@/server/schemas";
-import { api } from "@/utils/api";
 import useChatScroll from "@/hooks/useChatScroll";
 import getChatStyling from "@/utils/getChatStyling";
+import { BeatLoader } from "react-spinners";
 
 import { IconLoader2, IconRefresh } from "@tabler/icons-react";
 
@@ -18,38 +18,18 @@ const originalChatState: ChatMessage[] = [
 ];
 
 const Page: NextPage = () => {
+    const [streamLoading, setStreamLoading] = useState(false);
+    const [streamResponse, setStreamResponse] = useState<string | null>(null);
     const [message, setMessage] = useState<string>("");
     const [chatHistory, setChatHistory] =
         useState<ChatMessage[]>(originalChatState);
 
     const ref = useChatScroll(chatHistory);
-    const promptMutation = api.chat.prompt.useMutation({
-        onSuccess: (data) => {
-            return setChatHistory((history) => [
-                ...history,
-                {
-                    actor: "bot",
-                    message: data,
-                    timestamp: new Date(),
-                    error: false,
-                },
-            ]);
-        },
-        onError: () => {
-            return setChatHistory((history) => [
-                ...history,
-                {
-                    actor: "bot",
-                    message: "Sorry, something went wrong. Please try again.",
-                    timestamp: new Date(),
-                    error: true,
-                },
-            ]);
-        },
-    });
 
     const sendMessage = () => {
-        if (message !== "" && !promptMutation.isLoading) {
+        setStreamLoading(true);
+
+        if (message !== "" && !streamLoading) {
             const newHistory = [
                 ...chatHistory,
                 {
@@ -63,10 +43,83 @@ const Page: NextPage = () => {
             setChatHistory(newHistory);
             setMessage("");
 
-            return promptMutation.mutate({
-                messages: newHistory,
-            });
+            return streamChat(newHistory);
+
+            // return promptMutation.mutate({
+            //     messages: newHistory,
+            // });
         }
+    };
+
+    const streamChat = async (messages: ChatMessage[]) => {
+        const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                messages,
+            }),
+        });
+
+        if (!response.ok) {
+            return setChatHistory((history) => [
+                ...history,
+                {
+                    actor: "bot",
+                    message: "Sorry, something went wrong. Please try again.",
+                    timestamp: new Date(),
+                    error: true,
+                },
+            ]);
+        }
+
+        // This data is a ReadableStream
+        const data = response.body;
+        if (!data) {
+            return setChatHistory((history) => [
+                ...history,
+                {
+                    actor: "bot",
+                    message: "Sorry, something went wrong. Please try again.",
+                    timestamp: new Date(),
+                    error: true,
+                },
+            ]);
+        }
+
+        const reader = data.getReader();
+        const decoder = new TextDecoder();
+        let done = false;
+        let chunkResponse = "";
+
+        while (!done) {
+            const { value, done: doneReading } = await reader.read();
+            done = doneReading;
+            const chunkValue = decoder.decode(value);
+
+            chunkResponse += chunkValue;
+            setStreamResponse((prev) =>
+                prev === null ? chunkValue : prev + chunkValue
+            );
+        }
+
+        return cleanUp(chunkResponse);
+    };
+
+    const cleanUp = (response: string) => {
+        setChatHistory((history) => [
+            ...history,
+            {
+                actor: "bot",
+                message: response,
+                timestamp: new Date(),
+                error: false,
+            },
+        ]);
+
+        setStreamLoading(false);
+        return setStreamResponse(null);
     };
 
     const resetHistory = () => {
@@ -105,7 +158,7 @@ const Page: NextPage = () => {
                                 }`}
                             >
                                 <div
-                                    className={`mb-1 max-w-[80%] rounded-md px-3 py-2 md:max-w-[45%] ${
+                                    className={`max-w-[80%] rounded-md px-3 py-2 md:max-w-[45%] ${
                                         getChatStyling(chatMessage).styling
                                     }`}
                                 >
@@ -114,13 +167,27 @@ const Page: NextPage = () => {
                             </div>
                         ))}
 
-                        {promptMutation.isLoading && (
+                        {streamResponse ? (
                             <div className="justify-start">
-                                <div className="mb-1 max-w-[80%] rounded-md bg-slate-100 px-3 py-2 text-sm italic text-black md:max-w-[45%]">
-                                    Chatbot is thinking...
+                                <div className="mb-1 w-fit max-w-[80%] rounded-md bg-slate-100 px-3 py-2 text-black md:max-w-[45%]">
+                                    {streamResponse}
                                 </div>
                             </div>
-                        )}
+                        ) : streamLoading ? (
+                            <div className="justify-start">
+                                <div className="mb-1 w-fit rounded-md bg-slate-100 px-3 py-2 text-sm italic text-black md:max-w-[45%]">
+                                    <BeatLoader
+                                        size={10}
+                                        margin={0}
+                                        color="#adadad"
+                                    />
+                                </div>
+
+                                <p className="px-1 text-xs italic text-black">
+                                    Chatbot is thinking...
+                                </p>
+                            </div>
+                        ) : null}
                     </div>
                 </main>
 
@@ -140,11 +207,11 @@ const Page: NextPage = () => {
                         />
 
                         <button
-                            disabled={promptMutation.isLoading}
+                            disabled={streamLoading}
                             className="flex w-16 items-center justify-center rounded-md bg-slate-800 py-1 text-white transition-colors duration-100 ease-linear hover:bg-slate-900 active:bg-slate-950"
                             onClick={sendMessage}
                         >
-                            {promptMutation.isLoading ? (
+                            {streamLoading ? (
                                 <IconLoader2 className="h-5 w-5 animate-spin" />
                             ) : (
                                 "Send"
