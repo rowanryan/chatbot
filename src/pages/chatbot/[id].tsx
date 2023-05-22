@@ -129,12 +129,12 @@ const Page: NextPage = () => {
     return (
         <>
             <Head>
-                <title>Chatbot</title>
+                <title>Chat - VerityAI</title>
             </Head>
 
             <div className="flex h-screen flex-col">
                 <header className="flex items-center justify-between border-b-2 border-slate-100 bg-white px-4 py-2">
-                    <p className="text-lg font-bold">Chatbot</p>
+                    <p className="text-lg font-bold">VerityAI</p>
 
                     <button
                         title="Reset chat"
