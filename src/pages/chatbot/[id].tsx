@@ -192,7 +192,7 @@ const Page: NextPage = () => {
                 </main>
 
                 <footer className="border-t-2 border-slate-100 bg-white px-4 py-3">
-                    <div className="flex gap-x-3">
+                    <div className="flex gap-x-2 md:gap-x-3">
                         <input
                             type="text"
                             placeholder="Send a message..."
