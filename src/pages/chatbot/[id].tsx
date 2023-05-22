@@ -11,7 +11,7 @@ import { IconLoader2, IconRefresh } from "@tabler/icons-react";
 const originalChatState: ChatMessage[] = [
     {
         actor: "bot",
-        message: "Hi! What can I help you with?",
+        message: "Hi! How can I assist you today?",
         timestamp: new Date(),
         error: false,
     },

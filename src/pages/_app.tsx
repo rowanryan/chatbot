@@ -1,15 +1,18 @@
 import { type AppType } from "next/app";
-import { Open_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import { api } from "@/utils/api";
+import { ClerkProvider } from "@clerk/nextjs";
 import "@/styles/globals.css";
 
-const openSans = Open_Sans({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"] });
 
 const MyApp: AppType = ({ Component, pageProps }) => {
     return (
-        <div className={openSans.className}>
-            <Component {...pageProps} />
-        </div>
+        <ClerkProvider {...pageProps}>
+            <div className={inter.className}>
+                <Component {...pageProps} />
+            </div>
+        </ClerkProvider>
     );
 };
 

@@ -9,8 +9,12 @@ export const config = {
     runtime: "edge",
 };
 
+export type ChatRequestbody = {
+    messages: ChatMessage[];
+};
+
 export default async function POST(req: Request): Promise<Response> {
-    const body: { messages: ChatMessage[] } = await req.json();
+    const body: ChatRequestbody = await req.json();
     const messages: ChatGPTMessage[] = body.messages.map((message) => ({
         role: message.actor === "bot" ? "system" : "user",
         content: message.message,
