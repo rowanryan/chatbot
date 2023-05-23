@@ -6,6 +6,8 @@ import classNames from "@/utils/classNames";
 import { IconCopy } from "@tabler/icons-react";
 import copyToClipboard from "@/utils/copyToClipboard";
 
+import AddText from "@/components/AddText";
+
 const Page: NextPage = () => {
     const { isLoaded, user } = useUser();
 
@@ -63,9 +65,9 @@ const Page: NextPage = () => {
                             <Tab
                                 className={({ selected }) =>
                                     classNames(
-                                        "py-1 text-sm font-medium transition-colors duration-100 ease-linear",
+                                        "py-1 text-sm font-medium outline-none transition-colors duration-100 ease-linear",
                                         selected
-                                            ? "border-b-2 border-black"
+                                            ? "border-b-2 border-slate-800"
                                             : "text-slate-400 hover:text-slate-600"
                                     )
                                 }
@@ -75,9 +77,9 @@ const Page: NextPage = () => {
                             <Tab
                                 className={({ selected }) =>
                                     classNames(
-                                        "py-1 text-sm font-medium transition-colors duration-100 ease-linear",
+                                        "py-1 text-sm font-medium outline-none transition-colors duration-100 ease-linear",
                                         selected
-                                            ? "border-b-2 border-black"
+                                            ? "border-b-2 border-slate-800"
                                             : "text-slate-400 hover:text-slate-600"
                                     )
                                 }
@@ -87,9 +89,9 @@ const Page: NextPage = () => {
                             <Tab
                                 className={({ selected }) =>
                                     classNames(
-                                        "py-1 text-sm font-medium transition-colors duration-100 ease-linear",
+                                        "py-1 text-sm font-medium outline-none transition-colors duration-100 ease-linear",
                                         selected
-                                            ? "border-b-2 border-black"
+                                            ? "border-b-2 border-slate-800"
                                             : "text-slate-400 hover:text-slate-600"
                                     )
                                 }
@@ -98,7 +100,9 @@ const Page: NextPage = () => {
                             </Tab>
                         </Tab.List>
                         <Tab.Panels>
-                            <Tab.Panel className="pt-4">Content 1</Tab.Panel>
+                            <Tab.Panel className="pt-4">
+                                <AddText />
+                            </Tab.Panel>
                             <Tab.Panel className="pt-4">Content 2</Tab.Panel>
                             <Tab.Panel className="pt-4">Content 3</Tab.Panel>
                         </Tab.Panels>

@@ -8,3 +8,12 @@ export const chatMessage = z.object({
 });
 
 export type ChatMessage = z.infer<typeof chatMessage>;
+
+export const textEntry = z.object({
+    text: z
+        .string()
+        .min(1, { message: "Cannot be empty." })
+        .max(50000, { message: "Cannot have more than 50,000 characters." }),
+});
+
+export type TextEntry = z.infer<typeof textEntry>;
