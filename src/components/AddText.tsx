@@ -31,7 +31,7 @@ export default function AddText() {
 
     const onSubmit = (data: FieldValues) => {
         return mutation.mutate({
-            text: data.text,
+            text: data.text as string,
         });
     };
 
@@ -59,8 +59,12 @@ export default function AddText() {
                         </p>
                     ) : (
                         <p className="text-sm">
-                            {watch("text") ? watch("text").length : "0"} /
-                            50,000 characters
+                            {watch("text")
+                                ? Intl.NumberFormat("en-US").format(
+                                      (watch("text") as string).length
+                                  )
+                                : "0"}{" "}
+                            / 50,000 characters
                         </p>
                     )}
                 </fieldset>

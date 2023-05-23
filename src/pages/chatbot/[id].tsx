@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { type NextPage } from "next";
 import Head from "next/head";
-import { ChatMessage } from "@/server/schemas";
+import type { ChatMessage } from "@/server/schemas";
 import useChatScroll from "@/hooks/useChatScroll";
 import getChatStyling from "@/utils/getChatStyling";
 import { BeatLoader } from "react-spinners";

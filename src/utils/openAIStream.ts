@@ -1,8 +1,10 @@
+/* eslint-disable */
+
 import { env } from "@/env.mjs";
 import {
     createParser,
-    ParsedEvent,
-    ReconnectInterval,
+    type ParsedEvent,
+    type ReconnectInterval,
 } from "eventsource-parser";
 
 export type ChatGPTAgent = "user" | "system";
@@ -51,7 +53,7 @@ export async function OpenAIStream(payload: OpenAIStreamPayload) {
                         return;
                     }
                     try {
-                        const json = JSON.parse(data);
+                        const json: Record<string, any> = JSON.parse(data);
                         const text = json.choices[0].delta?.content || "";
                         if (counter < 2 && (text.match(/\n/) || []).length) {
                             // this is a prefix character (i.e., "\n\n"), do nothing

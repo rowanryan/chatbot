@@ -1,4 +1,4 @@
-import { ChatMessage } from "@/server/schemas";
+import type { ChatMessage } from "@/server/schemas";
 
 type Style = {
     justify: "justify-start" | "justify-end";

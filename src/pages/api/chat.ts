@@ -1,9 +1,9 @@
 import {
-    ChatGPTMessage,
+    type ChatGPTMessage,
     OpenAIStream,
-    OpenAIStreamPayload,
+    type OpenAIStreamPayload,
 } from "@/utils/openAIStream";
-import { ChatMessage } from "@/server/schemas";
+import type { ChatMessage } from "@/server/schemas";
 
 export const config = {
     runtime: "edge",
@@ -14,7 +14,7 @@ export type ChatRequestbody = {
 };
 
 export default async function POST(req: Request): Promise<Response> {
-    const body: ChatRequestbody = await req.json();
+    const body = (await req.json()) as ChatRequestbody;
     const messages: ChatGPTMessage[] = body.messages.map((message) => ({
         role: message.actor === "bot" ? "system" : "user",
         content: message.message,
