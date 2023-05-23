@@ -9,7 +9,6 @@ export const env = createEnv({
     server: {
         NODE_ENV: z.enum(["development", "test", "production"]),
         OPENAI_API_KEY: z.string(),
-        SERPAPI_API_KEY: z.string(),
         CLERK_SECRET_KEY: z.string(),
     },
 
@@ -33,7 +32,6 @@ export const env = createEnv({
     runtimeEnv: {
         NODE_ENV: process.env.NODE_ENV,
         OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-        SERPAPI_API_KEY: process.env.SERPAPI_API_KEY,
         NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
             process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
         CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
