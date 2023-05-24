@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { type NextPage } from "next";
 import Head from "next/head";
+import { env } from "@/env.mjs";
 import type { ChatMessage } from "@/server/schemas";
 import useChatScroll from "@/hooks/useChatScroll";
 import getChatStyling from "@/utils/getChatStyling";
@@ -129,12 +130,14 @@ const Page: NextPage = () => {
     return (
         <>
             <Head>
-                <title>Chat - VerityAI</title>
+                <title>Chat - {env.NEXT_PUBLIC_AI_NAME}</title>
             </Head>
 
             <div className="flex h-screen flex-col">
                 <header className="flex items-center justify-between border-b-2 border-slate-100 bg-white px-4 py-2">
-                    <p className="text-lg font-bold">VerityAI</p>
+                    <p className="text-lg font-bold">
+                        {env.NEXT_PUBLIC_AI_NAME}
+                    </p>
 
                     <button
                         title="Reset chat"

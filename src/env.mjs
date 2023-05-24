@@ -22,6 +22,7 @@ export const env = createEnv({
      * `NEXT_PUBLIC_`.
      */
     client: {
+        NEXT_PUBLIC_AI_NAME: z.string().min(1),
         NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
         NEXT_PUBLIC_CLERK_SIGN_IN_URL: z.string().min(1),
         NEXT_PUBLIC_CLERK_SIGN_UP_URL: z.string().min(1),
@@ -40,6 +41,7 @@ export const env = createEnv({
         PINECONE_API_KEY: process.env.PINECONE_API_KEY,
         PINECONE_ENVIRONMENT: process.env.PINECONE_ENVIRONMENT,
         PINECONE_INDEX: process.env.PINECONE_INDEX,
+        NEXT_PUBLIC_AI_NAME: process.env.NEXT_PUBLIC_AI_NAME,
         NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
             process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
         CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,

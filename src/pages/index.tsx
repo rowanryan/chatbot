@@ -3,6 +3,7 @@ import Head from "next/head";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { Tab } from "@headlessui/react";
 import classNames from "@/utils/classNames";
+import { env } from "@/env.mjs";
 import copyToClipboard from "@/utils/copyToClipboard";
 
 import AddText from "@/components/AddText";
@@ -21,12 +22,14 @@ const Page: NextPage = () => {
     return (
         <>
             <Head>
-                <title>VerityAI</title>
+                <title>{env.NEXT_PUBLIC_AI_NAME}</title>
             </Head>
 
             <header className="mb-6 border-b-2 border-slate-100 py-3 md:mb-8">
                 <div className="container flex max-w-screen-md items-center justify-between">
-                    <p className="text-xl font-extrabold">VerityAI</p>
+                    <p className="text-xl font-extrabold">
+                        {env.NEXT_PUBLIC_AI_NAME}
+                    </p>
 
                     <UserButton />
                 </div>
