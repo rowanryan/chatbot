@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { type NextPage } from "next";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { env } from "@/env.mjs";
 import type { ChatMessage } from "@/server/schemas";
 import useChatScroll from "@/hooks/useChatScroll";
@@ -19,6 +20,7 @@ const originalChatState: ChatMessage[] = [
 ];
 
 const Page: NextPage = () => {
+    const router = useRouter();
     const [streamLoading, setStreamLoading] = useState(false);
     const [streamResponse, setStreamResponse] = useState<string | null>(null);
     const [message, setMessage] = useState<string>("");
@@ -31,41 +33,42 @@ const Page: NextPage = () => {
         setStreamLoading(true);
 
         if (message !== "" && !streamLoading) {
-            const newHistory = [
-                ...chatHistory,
-                {
-                    message,
-                    actor: "user",
-                    error: false,
-                    timestamp: new Date(),
-                },
-            ] as ChatMessage[];
+            const newMessage = {
+                message,
+                actor: "user",
+                error: false,
+                timestamp: new Date(),
+            } satisfies ChatMessage;
+
+            const newHistory = [...chatHistory, newMessage] as ChatMessage[];
 
             setChatHistory(newHistory);
             setMessage("");
 
-            return streamChat(newHistory);
-
-            // return promptMutation.mutate({
-            //     messages: newHistory,
-            // });
+            return streamChat(chatHistory, newHistory, newMessage);
         }
     };
 
-    const streamChat = async (messages: ChatMessage[]) => {
+    const streamChat = async (
+        oldHistory: ChatMessage[],
+        newHistory: ChatMessage[],
+        newMessage: ChatMessage
+    ) => {
         const response = await fetch("/api/chat", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                messages,
+                identifier: router.query.id,
+                history: oldHistory,
+                newMessage,
             }),
         });
 
         if (!response.ok) {
-            return setChatHistory((history) => [
-                ...history,
+            return setChatHistory([
+                ...newHistory,
                 {
                     actor: "bot",
                     message: "Sorry, something went wrong. Please try again.",
@@ -78,8 +81,8 @@ const Page: NextPage = () => {
         // This data is a ReadableStream
         const data = response.body;
         if (!data) {
-            return setChatHistory((history) => [
-                ...history,
+            return setChatHistory([
+                ...newHistory,
                 {
                     actor: "bot",
                     message: "Sorry, something went wrong. Please try again.",
@@ -105,12 +108,12 @@ const Page: NextPage = () => {
             );
         }
 
-        return cleanUp(chunkResponse);
+        return cleanUp(chunkResponse, newHistory);
     };
 
-    const cleanUp = (response: string) => {
-        setChatHistory((history) => [
-            ...history,
+    const cleanUp = (response: string, newHistory: ChatMessage[]) => {
+        setChatHistory([
+            ...newHistory,
             {
                 actor: "bot",
                 message: response,
@@ -130,7 +133,7 @@ const Page: NextPage = () => {
     return (
         <>
             <Head>
-                <title>Chat - {env.NEXT_PUBLIC_AI_NAME}</title>
+                <title>{`Chat - ${env.NEXT_PUBLIC_AI_NAME}`}</title>
             </Head>
 
             <div className="flex h-screen flex-col">

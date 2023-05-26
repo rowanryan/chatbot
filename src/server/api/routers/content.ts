@@ -37,8 +37,8 @@ export const contentRouter = createTRPCRouter({
 
             try {
                 const splitter = new RecursiveCharacterTextSplitter({
-                    chunkSize: 500,
-                    chunkOverlap: 100,
+                    chunkSize: 1500,
+                    chunkOverlap: 200,
                 });
 
                 const chunks = await splitter.splitText(input.text);
