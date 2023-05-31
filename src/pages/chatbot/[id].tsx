@@ -29,6 +29,8 @@ const Page: NextPage = () => {
 
     const ref = useChatScroll(chatHistory);
 
+    const AI_NAME = router.query.ainame || env.NEXT_PUBLIC_AI_NAME;
+
     const sendMessage = () => {
         setStreamLoading(true);
 
@@ -45,11 +47,7 @@ const Page: NextPage = () => {
             setChatHistory(newHistory);
             setMessage("");
 
-            if (router.query.mode && router.query.mode === "edge") {
-                return streamChatEdge(chatHistory, newHistory, newMessage);
-            } else {
-                return streamChat(chatHistory, newHistory, newMessage);
-            }
+            return streamChat(chatHistory, newHistory, newMessage);
         }
     };
 
@@ -59,59 +57,6 @@ const Page: NextPage = () => {
         newMessage: ChatMessage
     ) => {
         const response = await fetch("/api/chat", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                identifier: router.query.id,
-                history: oldHistory,
-                newMessage,
-            }),
-        });
-
-        const stream = response.body as ReadableStream<Uint8Array>;
-        const reader = stream.getReader();
-        let chunkResponse = "";
-
-        try {
-            while (true) {
-                const { done, value } = await reader.read();
-
-                if (done) {
-                    break;
-                }
-
-                const chunkValue = new TextDecoder().decode(value);
-                chunkResponse += chunkValue;
-
-                setStreamResponse((prev) =>
-                    prev === null ? chunkValue : prev + chunkValue
-                );
-            }
-
-            return cleanUp(chunkResponse, newHistory);
-        } catch (error) {
-            return setChatHistory([
-                ...newHistory,
-                {
-                    actor: "bot",
-                    message: "Sorry, something went wrong. Please try again.",
-                    timestamp: new Date(),
-                    error: true,
-                },
-            ]);
-        } finally {
-            reader.releaseLock();
-        }
-    };
-
-    const streamChatEdge = async (
-        oldHistory: ChatMessage[],
-        newHistory: ChatMessage[],
-        newMessage: ChatMessage
-    ) => {
-        const response = await fetch("/api/chat-edge", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -194,16 +139,12 @@ const Page: NextPage = () => {
     return (
         <>
             <Head>
-                <title>{`Chat - ${
-                    router.query.ainame || env.NEXT_PUBLIC_AI_NAME
-                }`}</title>
+                <title>{`Chat - ${AI_NAME}`}</title>
             </Head>
 
             <div className="flex h-screen flex-col">
                 <header className="flex items-center justify-between border-b-2 border-slate-100 bg-white px-4 py-2">
-                    <p className="text-lg font-bold">
-                        {router.query.ainame || env.NEXT_PUBLIC_AI_NAME}
-                    </p>
+                    <p className="text-lg font-bold">{AI_NAME}</p>
 
                     <button
                         title="Reset chat"
@@ -253,9 +194,7 @@ const Page: NextPage = () => {
                                 </div>
 
                                 <p className="px-1 text-xs italic text-black">
-                                    {router.query.ainame ||
-                                        env.NEXT_PUBLIC_AI_NAME}{" "}
-                                    is thinking...
+                                    {AI_NAME} is thinking...
                                 </p>
                             </div>
                         ) : null}
