@@ -45,7 +45,11 @@ const Page: NextPage = () => {
             setChatHistory(newHistory);
             setMessage("");
 
-            return streamChat(chatHistory, newHistory, newMessage);
+            if (router.query.mode && router.query.mode === "edge") {
+                return streamChatEdge(chatHistory, newHistory, newMessage);
+            } else {
+                return streamChat(chatHistory, newHistory, newMessage);
+            }
         }
     };
 
@@ -66,7 +70,62 @@ const Page: NextPage = () => {
             }),
         });
 
+        const stream = response.body as ReadableStream<Uint8Array>;
+        const reader = stream.getReader();
+        let chunkResponse = "";
+
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+
+                if (done) {
+                    break;
+                }
+
+                const chunkValue = new TextDecoder().decode(value);
+                chunkResponse += chunkValue;
+
+                setStreamResponse((prev) =>
+                    prev === null ? chunkValue : prev + chunkValue
+                );
+            }
+
+            return cleanUp(chunkResponse, newHistory);
+        } catch (error) {
+            return setChatHistory([
+                ...newHistory,
+                {
+                    actor: "bot",
+                    message: "Sorry, something went wrong. Please try again.",
+                    timestamp: new Date(),
+                    error: true,
+                },
+            ]);
+        } finally {
+            reader.releaseLock();
+        }
+    };
+
+    const streamChatEdge = async (
+        oldHistory: ChatMessage[],
+        newHistory: ChatMessage[],
+        newMessage: ChatMessage
+    ) => {
+        const response = await fetch("/api/chat-edge", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                identifier: router.query.id,
+                history: oldHistory,
+                newMessage,
+            }),
+        });
+
         if (!response.ok) {
+            setStreamLoading(false);
+            setStreamResponse(null);
             return setChatHistory([
                 ...newHistory,
                 {
@@ -81,6 +140,8 @@ const Page: NextPage = () => {
         // This data is a ReadableStream
         const data = response.body;
         if (!data) {
+            setStreamLoading(false);
+            setStreamResponse(null);
             return setChatHistory([
                 ...newHistory,
                 {
@@ -133,13 +194,15 @@ const Page: NextPage = () => {
     return (
         <>
             <Head>
-                <title>{`Chat - ${env.NEXT_PUBLIC_AI_NAME}`}</title>
+                <title>{`Chat - ${
+                    router.query.ainame || env.NEXT_PUBLIC_AI_NAME
+                }`}</title>
             </Head>
 
             <div className="flex h-screen flex-col">
                 <header className="flex items-center justify-between border-b-2 border-slate-100 bg-white px-4 py-2">
                     <p className="text-lg font-bold">
-                        {env.NEXT_PUBLIC_AI_NAME}
+                        {router.query.ainame || env.NEXT_PUBLIC_AI_NAME}
                     </p>
 
                     <button
@@ -175,7 +238,7 @@ const Page: NextPage = () => {
 
                         {streamResponse ? (
                             <div className="justify-start">
-                                <div className="mb-1 w-fit max-w-[80%] rounded-md bg-slate-100 px-3 py-2 text-black md:max-w-[45%]">
+                                <div className="mb-1 w-fit max-w-[80%] rounded-md border border-orange-400 bg-slate-100 px-3 py-2 text-black md:max-w-[45%]">
                                     {streamResponse}
                                 </div>
                             </div>
@@ -190,7 +253,9 @@ const Page: NextPage = () => {
                                 </div>
 
                                 <p className="px-1 text-xs italic text-black">
-                                    Chatbot is thinking...
+                                    {router.query.ainame ||
+                                        env.NEXT_PUBLIC_AI_NAME}{" "}
+                                    is thinking...
                                 </p>
                             </div>
                         ) : null}

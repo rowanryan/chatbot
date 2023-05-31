@@ -17,3 +17,19 @@ export const textEntry = z.object({
 });
 
 export type TextEntry = z.infer<typeof textEntry>;
+
+export const chatRequest = z.object({
+    identifier: z.string(),
+    history: z
+        .object({
+            actor: z.enum(["bot", "user"]),
+            message: z.string(),
+            error: z.boolean(),
+        })
+        .array(),
+    newMessage: z.object({
+        actor: z.enum(["bot", "user"]),
+        message: z.string(),
+        error: z.boolean(),
+    }),
+});

@@ -3,7 +3,7 @@ import {
     OpenAIStream,
     type OpenAIStreamPayload,
 } from "@/utils/openAIStream";
-import type { ChatMessage } from "@/server/schemas";
+import { ChatMessage, chatRequest } from "@/server/schemas";
 import { env } from "@/env.mjs";
 import { injectData } from "@/utils/buildPrompt";
 
@@ -19,6 +19,16 @@ export type ChatRequestbody = {
 
 export default async function POST(req: Request): Promise<Response> {
     const body = (await req.json()) as ChatRequestbody;
+
+    const parsed = chatRequest.safeParse(body);
+
+    if (!parsed.success) {
+        return new Response(null, {
+            status: 400,
+            statusText: "Bad request.",
+        });
+    }
+
     const history: ChatGPTMessage[] = body.history.map((message) => ({
         role: message.actor === "bot" ? "system" : "user",
         content: message.message,
@@ -89,17 +99,22 @@ export default async function POST(req: Request): Promise<Response> {
     // Insert prompt
     let prompt = "";
 
-    if (!vectorData.matches[0]) {
-        prompt = body.newMessage.message;
-    } else {
+    if (vectorData.matches[0] && vectorData.matches[0].score >= 0.8) {
         prompt = injectData(
             body.newMessage.message,
             vectorData.matches[0].metadata.text,
             vectorData.matches[0].score
         );
+    } else {
+        prompt = body.newMessage.message;
     }
 
     const messages: ChatGPTMessage[] = [
+        {
+            role: "system",
+            content:
+                "This is a friendly conversation between an AI assistant and a user. The goal is for the AI assistant to answer the prompts from the user as accurately as possible. If needed, answer the prompts from the user based on the given context. If the context does not provide relevant information, just say you're not sure.",
+        },
         ...history,
         {
             role: "user",
